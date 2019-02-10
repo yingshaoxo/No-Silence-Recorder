@@ -19,16 +19,15 @@ import android.net.Uri
 import android.os.Environment
 import android.text.Editable
 import android.text.TextWatcher
-import android.widget.Toast
 import com.nabinbhandari.android.permissions.Permissions
 import com.pixplicity.easyprefs.library.Prefs
 import java.io.File
 import java.lang.Exception
 import java.util.*
 
-var storage_path = File(Environment.getExternalStorageDirectory().toString() + "/Download/AutoVolume")
+var storage_path = File(Environment.getExternalStorageDirectory().toString() + "/Download/NoSilence")
 fun make_sure_we_have_folder_to_store_something(): Boolean {
-    val sd_main = File(Environment.getExternalStorageDirectory().toString() + "/Download/AutoVolume")
+    val sd_main = storage_path
     var success = true
     if (!sd_main.exists()) {
         success = sd_main.mkdir()
@@ -40,6 +39,17 @@ class SoundMeter {
     lateinit var mediaRecorder: MediaRecorder
     lateinit var recording_file: File
     var started = false
+    var counting = 0
+
+    fun count(): Boolean {
+        this.counting = this.counting + 1
+        if (this.counting >= 10) {
+            this.counting = 0
+            return true
+        } else {
+            return false
+        }
+    }
 
     fun start(){
         mediaRecorder = MediaRecorder();
@@ -58,6 +68,7 @@ class SoundMeter {
         mediaRecorder.start()
 
         this.started = true
+        this.counting = 0
     }
 
     fun pause() {
@@ -115,7 +126,7 @@ class MainActivity : AppCompatActivity() {
                 .setUseDefaultSharedPreference(true)
                 .build()
 
-        amplitude_for_split = Prefs.getInt("amplitude_for_split", 0)
+        amplitude_for_split = Prefs.getInt("amplitude_for_split", 1000)
         gate.setText(amplitude_for_split.toString())
 
         fun update_amplitude_from_texteditor() {
@@ -159,7 +170,7 @@ class MainActivity : AppCompatActivity() {
 
                 gate.setText(max_amplitude.toString())
 
-                handler.postDelayed(this, 1000)
+                handler.postDelayed(this, 500)
             }
         }
 
@@ -168,14 +179,16 @@ class MainActivity : AppCompatActivity() {
                 val amplitude = update_amplitude()
 
                 if (amplitude < amplitude_for_split) {
-                    soundMeter.pause()
-                    set_tips("声音较小\n就当成背景音吧！\n...暂停录制...")
+                    if (soundMeter.count()) {
+                        soundMeter.pause()
+                        set_tips(getString(R.string.nobody_talk))
+                    }
                 } else {
                     soundMeter.resume()
-                    set_tips("有人说话\n看我大显身手\n...正在录制...")
+                    set_tips(getString(R.string.somebody_talk))
                 }
                 
-                handler.postDelayed(this, 50)
+                handler.postDelayed(this, 20)
             }
         }
 
@@ -190,20 +203,20 @@ class MainActivity : AppCompatActivity() {
                     if (!voice_button_was_pressed) {
                         if (!env_button_was_pressed) {
                             soundMeter.start()
-                            handler.postDelayed(EnvTask, 1000)
+                            handler.postDelayed(EnvTask, 500)
                             env_button_was_pressed = true
                             print("Click it again to stop detection")
-                            set_tips("我正在检测周围环境音量\n(嘘~ 不要说话)\n再次点击左边的按钮停止检测")
+                            set_tips(getString(R.string.keep_quiet))
                         } else if (env_button_was_pressed) {
                             handler.removeCallbacks(EnvTask)
                             soundMeter.stop()
                             soundMeter.delete_recording()
                             env_button_was_pressed = false
                             print("Detection stoped")
-                            set_tips("好了，如果你满意下面框中的阈值\n点击右边的按钮开始录音")
+                            set_tips(getString(R.string.after_detection))
                         }
                     } else if (voice_button_was_pressed) {
-                        print("点另一个按钮试试")
+                        print(getString(R.string.try_another_button))
                     }
                 }
 
@@ -212,19 +225,19 @@ class MainActivity : AppCompatActivity() {
                         if (!voice_button_was_pressed) {
                             update_amplitude_from_texteditor()
                             soundMeter.start()
-                            handler.postDelayed(VoiceTask, 50)
+                            handler.postDelayed(VoiceTask, 20)
                             voice_button_was_pressed = true
                             print("Recording started")
-                            set_tips("录制开始了")
+                            set_tips(getString(R.string.the_recording_has_started))
                         } else if (voice_button_was_pressed) {
                             handler.removeCallbacks(VoiceTask)
                             soundMeter.stop()
                             voice_button_was_pressed = false
-                            print("Check out /sdcord/Download/AutoVolume")
-                            set_tips("好吧，我录完了\n去 Download/AutoVolume 查看文件")
+                            print("Check out /sdcord/Download/NoSilence")
+                            set_tips(getString(R.string.the_recording_has_finished))
                         }
                     } else if (env_button_was_pressed) {
-                        print("点另一个按钮试试")
+                        print(getString(R.string.try_another_button))
                     }
                 }
 
@@ -253,10 +266,6 @@ class MainActivity : AppCompatActivity() {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
-            R.id.action_settings -> true
-            R.id.action_reset-> {
-                return true
-            }
             R.id.action_about-> {
                 openNewTabWindow("https://yingshaoxo.xyz", this)
                 return true

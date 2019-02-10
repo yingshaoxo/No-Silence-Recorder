@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">无间道录音器</string>
+    <string name="action_about">作者的主页</string>
+    <string name="start_recording">开始真实录音</string>
+    <string name="start_env_detection">环境音量检测</string>
+    <string name="try_the_two_buttons_below">点击下面两个按钮试试</string>
+    <string name="try_another_button">点另一个按钮试试</string>
+    <string name="the_recording_has_started">录制开始了</string>
+    <string name="the_recording_has_finished">好吧，我录完了\n去 Download/NoSilence 查看文件</string>
+    <string name="keep_quiet">我正在检测周围环境音量\n(嘘~ 不要说话)\n再次点击左边的按钮停止检测</string>
+    <string name="after_detection">好了，如果你满意下面框中的阈值\n点击右边的按钮开始录音</string>
+    <string name="nobody_talk">声音较小\n就当成背景音吧！\n...暂停录制...</string>
+    <string name="somebody_talk">有人说话\n看我大显身手\n...正在录制...</string>
+
+</resources>
